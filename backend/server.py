@@ -2,13 +2,16 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
+import json
 
 from app import SimpleTextExtractor  # Import your class
 
 app = Flask(__name__)
 CORS(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['SUMMARIES_FOLDER'] = 'summaries'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['SUMMARIES_FOLDER'], exist_ok=True)
 
 API_KEY = "AIzaSyCU3nUZyD7UXbin4yBr9c7YaAQCPC_Xhjo"  # Replace with your actual key
 
@@ -40,6 +43,35 @@ def upload_file():
         "instructions": instructions
     }
     return jsonify(result)
+
+@app.route('/api/summaries', methods=['POST'])
+def save_summary():
+    data = request.get_json()
+    if not data or 'summary' not in data or 'eventId' not in data:
+        return jsonify({'error': 'Missing summary or eventId'}), 400
+
+    event_id = data['eventId']
+    summary_content = data['summary']
+
+    # Sanitize event_id to prevent directory traversal attacks
+    safe_event_id = secure_filename(str(event_id))
+    if not safe_event_id:
+        return jsonify({'error': 'Invalid eventId'}), 400
+
+    filepath = os.path.join(app.config['SUMMARIES_FOLDER'], f"{safe_event_id}.json")
+
+    summary_data = {
+        'eventId': event_id,
+        'summary': summary_content,
+        'timestamp': request.date
+    }
+
+    try:
+        with open(filepath, 'w') as f:
+            json.dump(summary_data, f, indent=2)
+        return jsonify({'message': f'Summary for event {event_id} saved successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to save summary: {str(e)}'}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

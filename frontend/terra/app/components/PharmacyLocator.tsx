@@ -29,7 +29,7 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
     const loadGoogleMapsAPI = () => {
       if (typeof window !== 'undefined' && !window.google) {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
         script.async = true;
         script.defer = true;
         script.onload = () => {
@@ -63,6 +63,19 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
     });
   };
 
+  // Calculate distance between two points (Haversine formula)
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   // Search for nearby pharmacies
   const searchNearbyPharmacies = async (lat: number, lng: number): Promise<Pharmacy[]> => {
     if (!window.google) {
@@ -83,19 +96,42 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
       };
 
       service.nearbySearch(request, (results, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-          const pharmacyList: Pharmacy[] = results.map((place, index) => ({
-            id: place.place_id || `pharmacy-${index}`,
-            name: place.name || 'Unknown Pharmacy',
-            address: place.vicinity || 'Address not available',
-            rating: place.rating,
-            open_now: place.opening_hours?.isOpen(),
-            distance: place.geometry?.location ? 
-              window.google.maps.geometry.spherical.computeDistanceBetween(
-                new window.google.maps.LatLng(lat, lng),
-                place.geometry.location
-              ) / 1000 : undefined // Convert to km
-          }));
+        // Fix: Use string comparison for status due to type issues with PlacesServiceStatus
+        if (status === 'OK' && results) {
+          const pharmacyList: Pharmacy[] = results.map((place, index) => {
+            let distance: number | undefined;
+
+            // Try to calculate distance using Google Maps geometry library
+            if (place.geometry?.location && window.google?.maps?.geometry?.spherical) {
+              try {
+                distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+                  new window.google.maps.LatLng(lat, lng),
+                  place.geometry.location
+                ) / 1000; // Convert to km
+              } catch (error) {
+                console.warn('Failed to calculate distance using Google Maps geometry:', error);
+              }
+            }
+
+            // Fallback to Haversine formula if Google Maps geometry fails
+            if (distance === undefined && place.geometry?.location) {
+              distance = calculateDistance(
+                lat, 
+                lng, 
+                place.geometry.location.lat(), 
+                place.geometry.location.lng()
+              );
+            }
+
+            return {
+              id: place.place_id || `pharmacy-${index}`,
+              name: place.name || 'Unknown Pharmacy',
+              address: place.vicinity || 'Address not available',
+              rating: place.rating,
+              open_now: place.opening_hours?.isOpen(),
+              distance: distance
+            };
+          });
           resolve(pharmacyList);
         } else {
           console.error('Places search failed:', status);
@@ -124,12 +160,8 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
       const nearbyPharmacies = await searchNearbyPharmacies(coordinates.lat, coordinates.lng);
       setPharmacies(nearbyPharmacies);
 
-      // Create map URL with markers
-      const markers = nearbyPharmacies.map(pharmacy => 
-        `&markers=color:red%7Clabel:P%7C${pharmacy.address}`
-      ).join('');
-      
-      const mapUrl = `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${coordinates.lat},${coordinates.lng}&zoom=12${markers}`;
+      // Create map URL (without markers)
+      const mapUrl = `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${coordinates.lat},${coordinates.lng}&zoom=12`;
       setMapUrl(mapUrl);
 
     } catch (error) {

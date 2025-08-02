@@ -39,7 +39,6 @@ def upload_file():
         "patient_name": patient_name,
         "medication": medication,
         "doctor": doctor,
-        "expiry": expiry,
         "instructions": instructions
     }
     return jsonify(result)

@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Calendar as BigCalendar, momentLocalizer, View, Views } from 'react-big-calendar';
 import moment from 'moment';
+import Link from 'next/link';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = momentLocalizer(moment);
@@ -504,6 +505,13 @@ export default function Calendar({ onNavigateToPharmacy }: CalendarProps) {
                   >
                     Adjust Time
                   </button>
+                )}
+                {selectedEvent.type === 'ai-checkin' && (
+                  <Link href={`/meetingwithAI?eventId=${selectedEvent.id}`} passHref>
+                    <button className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                      Join Meeting
+                    </button>
+                  </Link>
                 )}
                 <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   Edit Event

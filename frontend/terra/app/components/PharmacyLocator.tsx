@@ -28,7 +28,8 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<HTMLIFrameElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markerRefs = useRef<Record<string, google.maps.Marker>>({});
+  // @ts-ignore
+  const markerRefs = useRef<Record<string, any>>({});
 
   // Load Google Maps API
   useEffect(() => {

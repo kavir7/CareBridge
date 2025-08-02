@@ -19,6 +19,7 @@ export default function FileUpload({
 }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,6 +65,29 @@ export default function FileUpload({
         input.files = e.dataTransfer.files;
         handleFileChange({ target: { files: e.dataTransfer.files } } as any);
       }
+    }
+  };
+
+  const handleAnalyzeClick = async () => {
+    if (!selectedFile) return;
+    await handleFileUpload(selectedFile);
+  };
+
+  const handleFileUpload = async (file: File) => {
+    setSelectedFile(file);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('http://localhost:5000/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      setAnalysisResult(data); // Save result to state
+      console.log('Prescription data:', data);
+    } catch (error) {
+      console.error('Error uploading file:', error);
     }
   };
 
@@ -115,7 +139,7 @@ export default function FileUpload({
       </div>
 
       {selectedFile && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-3">
+        <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-2">
           <div className="flex items-center">
             <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -128,6 +152,50 @@ export default function FileUpload({
                 Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
+          </div>
+          <button
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={handleAnalyzeClick}
+          >
+            Analyze Prescription
+          </button>
+        </div>
+      )}
+
+      {analysisResult && (
+        <div className="mt-4 p-4 bg-white border border-gray-200 rounded">
+          <h4 className="font-semibold mb-2">Prescription Summary</h4>
+          <div className="space-y-2 text-gray-800">
+            {analysisResult.patient_name && (
+              <div>
+                <span className="font-medium">Patient Name:</span> {analysisResult.patient_name}
+              </div>
+            )}
+            {analysisResult.medication && (
+              <div>
+                <span className="font-medium">Medication:</span> {analysisResult.medication}
+              </div>
+            )}
+            {analysisResult.instructions && (
+              <div>
+                <span className="font-medium">Instructions:</span> {analysisResult.instructions}
+              </div>
+            )}
+            {analysisResult.doctor && (
+              <div>
+                <span className="font-medium">Prescribed By:</span> {analysisResult.doctor}
+              </div>
+            )}
+            {analysisResult.expiry && (
+              <div>
+                <span className="font-medium">Expiry Date:</span> {analysisResult.expiry}
+              </div>
+            )}
+            {/* Optionally show full text for troubleshooting */}
+            {/* <details>
+              <summary className="text-sm text-gray-500 cursor-pointer">Show full prescription text</summary>
+              <div className="text-xs text-gray-500 mt-2">{analysisResult.full_text}</div>
+            </details> */}
           </div>
         </div>
       )}
@@ -144,4 +212,4 @@ export default function FileUpload({
       )}
     </div>
   );
-} 
+}

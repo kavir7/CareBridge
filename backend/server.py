@@ -23,6 +23,10 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
+    session_id = request.form.get('sessionId')
+    if not session_id:
+        return jsonify({'error': 'No sessionId provided'}), 400
+
     filename = secure_filename(file.filename)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
@@ -42,6 +46,28 @@ def upload_file():
         "expiry": expiry,
         "instructions": instructions
     }
+
+    # Store the extracted data in user_data.json
+    user_data_path = 'user_data.json'
+    try:
+        if os.path.exists(user_data_path):
+            with open(user_data_path, 'r') as f:
+                user_data = json.load(f)
+        else:
+            user_data = {}
+
+        user_data[session_id] = {
+            "patient_name": patient_name,
+            "medication": medication,
+            "doctor": doctor,
+        }
+
+        with open(user_data_path, 'w') as f:
+            json.dump(user_data, f, indent=2)
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to save user data: {str(e)}'}), 500
+
     return jsonify(result)
 
 @app.route('/api/summaries', methods=['POST'])
@@ -75,3 +101,26 @@ def save_summary():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+@app.route('/api/user_data', methods=['GET'])
+def get_user_data():
+    session_id = request.args.get('sessionId')
+    if not session_id:
+        return jsonify({'error': 'No sessionId provided'}), 400
+
+    user_data_path = 'user_data.json'
+    if not os.path.exists(user_data_path):
+        return jsonify({'error': 'No user data found'}), 404
+
+    try:
+        with open(user_data_path, 'r') as f:
+            user_data = json.load(f)
+
+        data = user_data.get(session_id)
+        if not data:
+            return jsonify({'error': 'No data found for this session'}), 404
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to retrieve user data: {str(e)}'}), 500

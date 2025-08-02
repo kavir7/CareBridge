@@ -10,6 +10,8 @@ interface Pharmacy {
   rating?: number;
   open_now?: boolean;
   distance?: number;
+  lat?: number;
+  lng?: number;
 }
 
 interface PharmacyLocatorProps {
@@ -22,7 +24,11 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mapUrl, setMapUrl] = useState('');
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<HTMLIFrameElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markerRefs = useRef<Record<string, google.maps.Marker>>({});
 
   // Load Google Maps API
   useEffect(() => {
@@ -76,7 +82,8 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
     return R * c;
   };
 
-  // Search for nearby pharmacies
+  // 1. Update searchNearbyPharmacies to scan for specific chains
+  const pharmacyChains = ['Shoppers Drug Mart', 'Rexall', 'Pharmasave', 'Guardian', 'IDA', 'Costco Pharmacy', 'Walmart Pharmacy'];
   const searchNearbyPharmacies = async (lat: number, lng: number): Promise<Pharmacy[]> => {
     if (!window.google) {
       console.error('Google Maps API not loaded');
@@ -84,62 +91,73 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
     }
 
     return new Promise((resolve) => {
-      const service = new window.google.maps.places.PlacesService(
-        document.createElement('div')
-      );
-
-      const request = {
+      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+      const requests = pharmacyChains.map(chain => ({
         location: new window.google.maps.LatLng(lat, lng),
-        radius: 10000, // 10km radius
+        radius: 10000,
         type: 'pharmacy',
-        keyword: 'pharmacy drugstore'
-      };
+        keyword: chain
+      }));
 
-      service.nearbySearch(request, (results, status) => {
-        // Fix: Use string comparison for status due to type issues with PlacesServiceStatus
-        if (status === 'OK' && results) {
-          const pharmacyList: Pharmacy[] = results.map((place, index) => {
-            let distance: number | undefined;
+      let allResults: Pharmacy[] = [];
+      let completed = 0;
 
-            // Try to calculate distance using Google Maps geometry library
-            if (place.geometry?.location && window.google?.maps?.geometry?.spherical) {
-              try {
-                distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-                  new window.google.maps.LatLng(lat, lng),
-                  place.geometry.location
-                ) / 1000; // Convert to km
-              } catch (error) {
-                console.warn('Failed to calculate distance using Google Maps geometry:', error);
+      requests.forEach((request, idx) => {
+        service.nearbySearch(request, (results, status) => {
+          if (status === 'OK' && results) {
+            const pharmacies = results.map((place, index) => {
+              let distance: number | undefined;
+              if (place.geometry?.location && window.google?.maps?.geometry?.spherical) {
+                try {
+                  distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+                    new window.google.maps.LatLng(lat, lng),
+                    place.geometry.location
+                  ) / 1000;
+                } catch (error) {}
               }
-            }
-
-            // Fallback to Haversine formula if Google Maps geometry fails
-            if (distance === undefined && place.geometry?.location) {
-              distance = calculateDistance(
-                lat, 
-                lng, 
-                place.geometry.location.lat(), 
-                place.geometry.location.lng()
-              );
-            }
-
-            return {
-              id: place.place_id || `pharmacy-${index}`,
-              name: place.name || 'Unknown Pharmacy',
-              address: place.vicinity || 'Address not available',
-              rating: place.rating,
-              open_now: place.opening_hours?.isOpen(),
-              distance: distance
-            };
-          });
-          resolve(pharmacyList);
-        } else {
-          console.error('Places search failed:', status);
-          resolve([]);
-        }
+              if (distance === undefined && place.geometry?.location) {
+                distance = calculateDistance(
+                  lat,
+                  lng,
+                  place.geometry.location.lat(),
+                  place.geometry.location.lng()
+                );
+              }
+              return {
+                id: place.place_id || `pharmacy-${idx}-${index}`,
+                name: place.name || 'Unknown Pharmacy',
+                address: place.vicinity || 'Address not available',
+                rating: place.rating,
+                open_now: place.opening_hours?.isOpen(),
+                distance: distance,
+                lat: place.geometry?.location ? place.geometry.location.lat() : undefined,
+                lng: place.geometry?.location ? place.geometry.location.lng() : undefined
+              };
+            });
+            allResults = allResults.concat(pharmacies);
+          }
+          completed++;
+          if (completed === requests.length) {
+            // Remove duplicates by place_id
+            const unique = Object.values(
+              allResults.reduce((acc, cur) => {
+                acc[cur.id] = cur;
+                return acc;
+              }, {} as Record<string, Pharmacy>)
+            );
+            resolve(unique);
+          }
+        });
       });
     });
   };
+
+  // 2. Sort pharmacies by distance before rendering
+  useEffect(() => {
+    setPharmacies((prev) =>
+      [...prev].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
+    );
+  }, [pharmacies.length]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,6 +173,8 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
         setLoading(false);
         return;
       }
+
+      setUserLocation(coordinates);
 
       // Search for nearby pharmacies
       const nearbyPharmacies = await searchNearbyPharmacies(coordinates.lat, coordinates.lng);
@@ -179,6 +199,84 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
     // Here you would typically upload the file to your backend
     // For now, we'll just log the file info
   };
+
+  // 3. Render Google Map with markers and InfoWindows
+  useEffect(() => {
+    if (
+      pharmacies.length > 0 &&
+      window.google &&
+      mapContainerRef.current &&
+      pharmacies[0].lat !== undefined &&
+      pharmacies[0].lng !== undefined
+    ) {
+      const center = userLocation
+        ? { lat: userLocation.lat, lng: userLocation.lng }
+        : { lat: pharmacies[0].lat as number, lng: pharmacies[0].lng as number };
+      const map = new window.google.maps.Map(mapContainerRef.current, {
+        center,
+        zoom: 12,
+      });
+
+      const infoWindow = new window.google.maps.InfoWindow();
+      markerRefs.current = {}; // Reset marker refs
+
+      // 1. Add user location marker (distinct icon)
+      if (userLocation) {
+        const userMarker = new window.google.maps.Marker({
+          position: userLocation,
+          map,
+          title: 'Your Address',
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+            scaledSize: new window.google.maps.Size(40, 40),
+          },
+        });
+        userMarker.addListener('click', () => {
+          infoWindow.setContent('<strong>Your Address</strong>');
+          infoWindow.open(map, userMarker);
+        });
+      }
+
+      // 2. Add pharmacy markers and store refs
+      pharmacies.forEach((pharmacy) => {
+        if (pharmacy.lat !== undefined && pharmacy.lng !== undefined) {
+          const marker = new window.google.maps.Marker({
+            position: { lat: pharmacy.lat as number, lng: pharmacy.lng as number },
+            map,
+            title: pharmacy.name,
+            icon: {
+              url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+              scaledSize: new window.google.maps.Size(40, 40),
+            },
+          });
+
+          markerRefs.current[pharmacy.id] = marker;
+
+          marker.addListener('click', () => {
+            infoWindow.setContent(`
+              <div>
+                <strong>${pharmacy.name}</strong><br/>
+                <button id="view-details-${pharmacy.id}">View Details</button>
+              </div>
+            `);
+            infoWindow.open(map, marker);
+
+            window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+              const btn = document.getElementById(`view-details-${pharmacy.id}`);
+              if (btn) {
+                btn.onclick = (e) => {
+                  e.preventDefault();
+                  setSelectedPharmacyId(pharmacy.id);
+                };
+              }
+            });
+
+            setSelectedPharmacyId(pharmacy.id); // Highlight in list when marker is clicked
+          });
+        }
+      });
+    }
+  }, [pharmacies, userLocation]);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -233,18 +331,7 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">Map View</h2>
             <div className="p-6">
-              {mapUrl && (
-                <iframe
-                  ref={mapRef}
-                  src={mapUrl}
-                  width="100%"
-                  height="400"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              )}
+              <div ref={mapContainerRef} style={{ width: '100%', height: '400px' }} />
             </div>
           </div>
 
@@ -258,27 +345,66 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
                 {pharmacies.map((pharmacy) => (
                   <div
                     key={pharmacy.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ${selectedPharmacyId === pharmacy.id ? 'bg-blue-50 border-blue-400' : ''}`}
+                    onClick={() => {
+                      setSelectedPharmacyId(pharmacy.id);
+                      const marker = markerRefs.current[pharmacy.id];
+                      if (marker) {
+                        window.google.maps.event.trigger(marker, 'click');
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <h3 className="font-semibold text-gray-900">{pharmacy.name}</h3>
-                    <p className="text-gray-600 text-sm mt-1">{pharmacy.address}</p>
-                    <div className="flex items-center gap-4 mt-2 text-sm">
-                      {pharmacy.rating && (
-                        <span className="flex items-center text-yellow-600">
-                          ⭐ {pharmacy.rating}
-                        </span>
-                      )}
-                      {pharmacy.distance && (
-                        <span className="text-gray-500">
-                          {(pharmacy.distance).toFixed(1)} km away
-                        </span>
-                      )}
-                      {pharmacy.open_now !== undefined && (
-                        <span className={pharmacy.open_now ? 'text-green-600' : 'text-red-600'}>
-                          {pharmacy.open_now ? 'Open' : 'Closed'}
-                        </span>
-                      )}
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-lg font-bold">{pharmacy.name}</h3>
+                        <p className="text-gray-600">{pharmacy.address}</p>
+                        {pharmacy.distance !== undefined && (
+                          <p className="text-sm text-gray-500">
+                            {pharmacy.distance.toFixed(2)} km away
+                          </p>
+                        )}
+                        {pharmacy.rating && (
+                          <p className="text-sm text-yellow-600">Rating: {pharmacy.rating}</p>
+                        )}
+                        {pharmacy.open_now !== undefined && (
+                          <p className={`text-sm ${pharmacy.open_now ? 'text-green-600' : 'text-red-600'}`}>
+                            {pharmacy.open_now ? 'Open Now' : 'Closed'}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent parent onClick
+                          setSelectedPharmacyId(pharmacy.id);
+                          const marker = markerRefs.current[pharmacy.id];
+                          if (marker) {
+                            window.google.maps.event.trigger(marker, 'click');
+                          }
+                        }}
+                      >
+                        View Details
+                      </button>
                     </div>
+                    {/* Expanded details if selected */}
+                    {selectedPharmacyId === pharmacy.id && (
+                      <div className="mt-4 p-4 bg-white border-t border-gray-200">
+                        <h4 className="font-semibold mb-2">Hours of Operation</h4>
+                        <ul className="text-sm text-gray-700 mb-2">
+                          <li>Mon-Fri: 9am - 9pm</li>
+                          <li>Sat: 10am - 6pm</li>
+                          <li>Sun: 11am - 5pm</li>
+                        </ul>
+                        <h4 className="font-semibold mb-2">Stock Template</h4>
+                        <ul className="text-sm text-gray-700">
+                          <li>✔️ Acetaminophen</li>
+                          <li>✔️ Ibuprofen</li>
+                          <li>✔️ Antibiotics</li>
+                          <li>❌ Prescription XYZ</li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -286,14 +412,6 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
           </div>
         </div>
       )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Searching for pharmacies...</p>
-        </div>
-      )}
     </div>
   );
-} 
+}

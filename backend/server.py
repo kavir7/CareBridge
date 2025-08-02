@@ -7,7 +7,7 @@ import json
 from app import SimpleTextExtractor  # Import your class
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SUMMARIES_FOLDER'] = 'summaries'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

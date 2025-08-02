@@ -1,0 +1,4 @@
+# Copy this to .env.local and replace <YOUR_DB_PASSWORD> with your actual MongoDB password
+
+MONGODB_URI=mongodb+srv://kerelosgayed:<YOUR_DB_PASSWORD>@terracluster.ixq05qv.mongodb.net/
+MONGODB_DB=terrahacksDatabase

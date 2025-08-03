@@ -13,7 +13,7 @@ app.config['SUMMARIES_FOLDER'] = 'summaries'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['SUMMARIES_FOLDER'], exist_ok=True)
 
-API_KEY = "AIzaSyCU3nUZyD7UXbin4yBr9c7YaAQCPC_Xhjo"  # Replace with your actual key
+API_KEY = "AIzaSyCdopVKYikqDhRq-21uSeR-hDYHdLgs7uM"  # Replace with your actual key
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

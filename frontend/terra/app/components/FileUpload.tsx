@@ -77,6 +77,8 @@ export default function FileUpload({
     setSelectedFile(file);
     const formData = new FormData();
     formData.append('file', file);
+    // Generate a unique session ID for this upload
+    formData.append('sessionId', `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
     try {
       const response = await fetch('http://localhost:5000/upload', {

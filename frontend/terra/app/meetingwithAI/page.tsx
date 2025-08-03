@@ -13,37 +13,40 @@ export default function MeetingWithAIPage() {
   const [displayedText, setDisplayedText] = useState('');
   const [showAllSummaries, setShowAllSummaries] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-  
+
   const contextText = "Kavir told our AI agent he began feeling dizzy two days after donating a kidney, with symptoms worsening when standing. He also mentioned some nausea. Our agent explained it could be orthostatic hypotension, likely from low blood pressure or mild dehydration. Kavir doesn't have a blood pressure monitor and was advised to visit urgent care if the dizziness worsens or he feels faint. He confirmed no chest pain and normal urination.";
 
-  // Sample previous summaries - all Kavir's kidney-related sessions
-  const previousSummaries = [
-    {
-      id: 1,
-      date: "2025-07-30",
-      summary: "Kavir reported continued improvement in his post-donation recovery. He mentioned that his energy levels are returning to normal and he's been cleared to resume light exercise. Our agent discussed gradual activity progression and reminded him about staying hydrated. He confirmed his follow-up appointment with nephrology is scheduled for next week."
-    },
-    {
-      id: 2,
-      date: "2025-07-28",
-      summary: "Kavir expressed concerns about long-term kidney function after his donation. He's been researching online and feels anxious about potential complications. Our agent provided reassurance about donor outcomes and emphasized following medical guidance over internet research. He agreed to discuss these concerns with his transplant team."
-    },
-    {
-      id: 3,
-      date: "2025-07-25",
-      summary: "Kavir discussed his surgical site healing progress. He noted some mild itching around the incision but no signs of infection. Our agent reminded him about proper wound care and when to contact his surgeon. He confirmed he's been taking his prescribed medications consistently and monitoring his blood pressure daily."
-    },
-    {
-      id: 4,
-      date: "2025-07-22",
-      summary: "Kavir shared updates on his recipient brother's progress, expressing relief that the transplant was successful. He mentioned feeling emotionally fulfilled by his decision to donate. Our agent acknowledged his generosity while reminding him to focus on his own recovery needs. He confirmed adequate pain management and good appetite."
-    },
-    {
-      id: 5,
-      date: "2025-07-20", 
-      summary: "Kavir reported his first week post-donation went smoothly. He mentioned some expected surgical pain and fatigue but felt optimistic overall. Our agent reviewed activity restrictions and signs to watch for. He confirmed family support at home and understanding of when to seek medical attention if symptoms worsen."
-    }
-  ];
+
+ const previousSummaries = [
+  {
+    id: 1,
+    date: "2025-08-03 3:46AM",
+    summary: "Vivaan reported sustaining a chemical burn on his left forearm following a lab accident involving concentrated sulfuric acid. He performed immediate irrigation for 20 minutes under cool running water. Our agent confirmed that decontamination was done correctly and reviewed signs of coagulative necrosis common with acidic burns. Vivaan was advised to avoid occlusive dressings in the acute phase."
+  },
+  {
+    id: 2,
+    date: "2025-08-03 4:57AM",
+    summary: "Vivaan expressed concern over continued erythema and a stinging sensation despite using a non-adherent dressing. He was unsure if deeper tissue damage had occurred. Our agent explained the difference between superficial and deep partial-thickness burns, and noted that delayed tissue necrosis can occur in chemical exposures. Vivaan agreed to schedule a wound assessment with outpatient dermatology."
+  },
+  {
+    id: 3,
+    date: "2025-08-03 6:17AM",
+    summary: "Vivaan reported that his burn was classified as a superficial partial-thickness injury involving the epidermis and superficial dermis. He was prescribed 1% silver sulfadiazine and given instructions to maintain a moist wound environment to promote re-epithelialization. Our agent emphasized the importance of avoiding hydrogen peroxide or iodine-based antiseptics, which can delay healing."
+  },
+  {
+    id: 4,
+    date: "2025-08-03 8:50AM",
+    summary: "Vivaan noted reduced pain and early signs of epithelial regeneration along the wound margins. He mentioned a follow-up consult confirmed no eschar formation and good capillary refill across the affected area. Our agent discussed the role of hydrocolloid dressings in managing exudate and minimizing trauma during dressing changes. Vivaan confirmed consistent application of topical agents."
+  },
+  {
+    id: 5,
+    date: "2025-08-03 8:52AM",
+    summary: "Vivaan reflected on the importance of PPE compliance and chemical spill protocols. He mentioned his lab supervisor has now implemented a calcium gluconate gel station near all acid storage units. Our agent acknowledged the systemic approach to lab safety and encouraged him to report any signs of delayed hypersensitivity. Vivaan confirmed he is keeping photographic wound documentation for follow-up."
+  }
+];
+
+
+
 
   useEffect(() => {
     if (showTypewriter) {
@@ -103,7 +106,7 @@ export default function MeetingWithAIPage() {
 
           {/* ElevenLabs Widget Placeholder */}
           <div className="mb-6 p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
-            <div 
+            <div
               dangerouslySetInnerHTML={{
                 __html: `
                   <elevenlabs-convai agent-id="agent_1601k1q01gsae9jae5wr2jj0dv7y"></elevenlabs-convai>
@@ -131,7 +134,7 @@ export default function MeetingWithAIPage() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">Session Summary</h3>
               <div className="w-full h-px bg-gray-200"></div>
             </div>
-            
+
             <div className="prose prose-gray max-w-none">
               <p className="text-gray-800 leading-relaxed font-mono text-sm">
                 {displayedText}
@@ -156,13 +159,13 @@ export default function MeetingWithAIPage() {
               </div>
               <div className="w-full h-px bg-gray-200"></div>
             </div>
-            
+
             <div className="space-y-6">
               {previousSummaries.map((session, index) => (
                 <div key={session.id} className="border-l-4 border-gray-200 pl-4 py-2">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-medium text-gray-900">Session #{previousSummaries.length - index}</h4>
-                    <span className="text-sm text-gray-500">{new Date(session.date).toLocaleDateString()}</span>
+                    <span className="text-sm text-gray-500">{session.date}</span>
                   </div>
                   <p className="text-gray-700 text-sm leading-relaxed font-mono">
                     {session.summary}

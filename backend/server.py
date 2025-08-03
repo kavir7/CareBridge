@@ -173,8 +173,7 @@ def summarize_text():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
+
 
 @app.route('/api/user_data', methods=['GET'])
 def get_user_data():
@@ -198,3 +197,8 @@ def get_user_data():
 
     except Exception as e:
         return jsonify({'error': f'Failed to retrieve user data: {str(e)}'}), 500
+    
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

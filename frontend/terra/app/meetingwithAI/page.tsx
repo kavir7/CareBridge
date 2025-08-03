@@ -70,24 +70,15 @@ export default function MeetingWithAIPage() {
 
        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
          <h2 className="text-2xl font-semibold text-gray-700 mb-4">ElevenLabs AI Assistant</h2>
-         <div id="elevenlabs-widget-container">
-           <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-             <h2 className="text-2xl font-semibold text-gray-700 mb-4">ElevenLabs AI Assistant</h2>
-             <div id="elevenlabs-widget-container"></div>
-             <script
-               dangerouslySetInnerHTML={{
-                 __html: `
-       window.elevenlabs = window.elevenlabs || {};
-       window.elevenlabs.agentId = "agent_7401k1p7vny4fh786mwjhzr9ijm9";
-       window.elevenlabs.dynamicVariables = ${JSON.stringify(userData)};
-     `,
-               }}
-             />
-             <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
-           </div>
-
-
-           <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+         <div>
+           <div
+             dangerouslySetInnerHTML={{
+               __html: `
+                 <elevenlabs-convai agent-id="agent_1601k1q01gsae9jae5wr2jj0dv7y"></elevenlabs-convai>
+                 <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+               `,
+             }}
+           />
          </div>
        </div>
 

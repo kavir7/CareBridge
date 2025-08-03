@@ -20,29 +20,6 @@ export default function MeetingWithAIPage() {
  const eventId = searchParams.get('eventId');
 
 
- useEffect(() => {
-   const fetchUserData = async () => {
-     const sessionId = localStorage.getItem('userSessionId');
-     if (sessionId) {
-       try {
-         const response = await fetch(`http://localhost:5000/api/user_data?sessionId=${sessionId}`);
-         if (response.ok) {
-           const data = await response.json();
-           setUserData(data);
-         } else {
-           console.error('Failed to fetch user data');
-         }
-       } catch (error) {
-         console.error('Error fetching user data:', error);
-       }
-     }
-   };
-
-
-   fetchUserData();
- }, []);
-
-
  const handleSaveSummary = async () => {
    if (!eventId) {
      alert('Error: No event ID found.');

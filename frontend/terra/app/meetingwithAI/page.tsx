@@ -1,223 +1,141 @@
 'use client';
 
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
+
 interface UserData {
-  patient_name: string;
-  medication: string;
-  doctor: string;
+ patient_name: string;
+ medication: string;
+ doctor: string;
 }
+
 
 export default function MeetingWithAIPage() {
-  const [summary, setSummary] = useState('');
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const searchParams = useSearchParams();
-  const eventId = searchParams.get('eventId');
+ const [summary, setSummary] = useState('');
+ const [userData, setUserData] = useState<UserData | null>(null);
+ const searchParams = useSearchParams();
+ const eventId = searchParams.get('eventId');
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const sessionId = localStorage.getItem('userSessionId');
-      if (sessionId) {
-        try {
-          const response = await fetch(`http://localhost:5000/api/user_data?sessionId=${sessionId}`);
-          if (response.ok) {
-            const data = await response.json();
-            setUserData(data);
-          } else {
-            console.error('Failed to fetch user data');
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      }
-    };
 
-    fetchUserData();
-  }, []);
+ useEffect(() => {
+   const fetchUserData = async () => {
+     const sessionId = localStorage.getItem('userSessionId');
+     if (sessionId) {
+       try {
+         const response = await fetch(`http://localhost:5000/api/user_data?sessionId=${sessionId}`);
+         if (response.ok) {
+           const data = await response.json();
+           setUserData(data);
+         } else {
+           console.error('Failed to fetch user data');
+         }
+       } catch (error) {
+         console.error('Error fetching user data:', error);
+       }
+     }
+   };
 
-  const handleSaveSummary = async () => {
-    if (!eventId) {
-      alert('Error: No event ID found.');
-      return;
-    }
 
-    try {
-      const response = await fetch('http://localhost:5000/api/summaries', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventId,
-          summary,
-        }),
-      });
+   fetchUserData();
+ }, []);
 
-      if (response.ok) {
-        alert('Summary saved successfully!');
-        setSummary('');
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to save summary: ${errorData.error}`);
-      }
-    } catch (error) {
-      console.error('Error saving summary:', error);
-      alert('An error occurred while saving the summary.');
-    }
-  };
 
-  const startRecording = async () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
-        setMediaRecorder(recorder);
+ const handleSaveSummary = async () => {
+   if (!eventId) {
+     alert('Error: No event ID found.');
+     return;
+   }
 
-        const chunks: Blob[] = [];
-        recorder.ondataavailable = (e) => {
-          chunks.push(e.data);
-        };
 
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
-          setAudioBlob(blob);
-        };
+   try {
+     const response = await fetch('http://localhost:5000/api/summaries', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify({
+         eventId,
+         summary,
+       }),
+     });
 
-        recorder.start();
-        setIsRecording(true);
-      } catch (err) {
-        console.error('Error getting user media', err);
-        alert("Could not start recording. Please ensure you have given microphone permissions.");
-      }
-    }
-  };
 
-  const stopRecording = () => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-    }
-  };
+     if (response.ok) {
+       alert('Summary saved successfully!');
+       setSummary('');
+     } else {
+       const errorData = await response.json();
+       alert(`Failed to save summary: ${errorData.error}`);
+     }
+   } catch (error) {
+     console.error('Error saving summary:', error);
+     alert('An error occurred while saving the summary.');
+   }
+ };
 
-  const generateSummary = async () => {
-    if (!audioBlob) return;
 
-    const formData = new FormData();
-    formData.append('file', audioBlob, 'recording.webm');
+ return (
+   <div className="min-h-screen bg-gray-100 p-8">
+     <div className="max-w-4xl mx-auto">
+       <div className="flex justify-between items-center mb-4">
+         <h1 className="text-4xl font-bold text-gray-800">AI Check-in</h1>
+         <Link href="/summaries" className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200">
+           View Past Summaries
+         </Link>
+       </div>
+       <p className="text-gray-600 mb-8">
+         Have a conversation with your AI assistant about your recovery progress.
+       </p>
 
-    try {
-      const transcribeResponse = await fetch('http://localhost:5000/api/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
 
-      if (transcribeResponse.ok) {
-        const { transcription } = await transcribeResponse.json();
+       <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+         <h2 className="text-2xl font-semibold text-gray-700 mb-4">ElevenLabs AI Assistant</h2>
+         <div id="elevenlabs-widget-container">
+           <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+             <h2 className="text-2xl font-semibold text-gray-700 mb-4">ElevenLabs AI Assistant</h2>
+             <div id="elevenlabs-widget-container"></div>
+             <script
+               dangerouslySetInnerHTML={{
+                 __html: `
+       window.elevenlabs = window.elevenlabs || {};
+       window.elevenlabs.agentId = "agent_7401k1p7vny4fh786mwjhzr9ijm9";
+       window.elevenlabs.dynamicVariables = ${JSON.stringify(userData)};
+     `,
+               }}
+             />
+             <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+           </div>
 
-        if (!transcription) {
-          alert("Could not transcribe audio. The recording might be silent.");
-          return;
-        }
 
-        const summarizeResponse = await fetch('http://localhost:5000/api/summarize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: transcription }),
-        });
+           <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+         </div>
+       </div>
 
-        if (summarizeResponse.ok) {
-          const { summary } = await summarizeResponse.json();
-          setSummary(summary);
-        } else {
-          alert('Failed to generate summary.');
-          console.error('Failed to generate summary');
-        }
-      } else {
-        alert('Failed to transcribe audio.');
-        console.error('Failed to transcribe audio');
-      }
-    } catch (error) {
-      alert('An error occurred while generating the summary.');
-      console.error('Error generating summary:', error);
-    }
-  };
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-4xl font-bold text-gray-800">AI Check-in</h1>
-          <Link href="/summaries" className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200">
-            View Past Summaries
-          </Link>
-        </div>
-        <p className="text-gray-600 mb-8">
-          Have a conversation with your AI assistant about your recovery progress.
-        </p>
-
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">ElevenLabs AI Assistant</h2>
-          <div id="elevenlabs-widget-container">
-            <elevenlabs-convai
-              agent-id="agent_7401k1p7vny4fh786mwjhzr9jjm9"
-              dynamic-variables={userData ? JSON.stringify(userData) : '{}'}
-            >
-            </elevenlabs-convai>
-            <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Record Conversation</h2>
-          <div className="flex items-center space-x-4">
-            {!isRecording ? (
-              <button
-                onClick={startRecording}
-                className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
-              >
-                Start Recording
-              </button>
-            ) : (
-              <button
-                onClick={stopRecording}
-                className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
-              >
-                Stop Recording
-              </button>
-            )}
-            <button
-              onClick={generateSummary}
-              disabled={!audioBlob}
-              className="px-6 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              Generate Summary
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Meeting Summary</h2>
-          <textarea
-            className="w-full h-40 p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            placeholder="Enter a summary of the meeting..."
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
-          ></textarea>
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={handleSaveSummary}
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-            >
-              End Meeting & Save Summary
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+       <div className="bg-white rounded-lg shadow-lg p-6">
+         <h2 className="text-2xl font-semibold text-gray-700 mb-4">Meeting Summary</h2>
+         <textarea
+           className="w-full h-40 p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+           placeholder="Enter a summary of the meeting..."
+           value={summary}
+           onChange={(e) => setSummary(e.target.value)}
+         ></textarea>
+         <div className="mt-4 flex justify-end">
+           <button
+             onClick={handleSaveSummary}
+             className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+           >
+             End Meeting & Save Summary
+           </button>
+         </div>
+       </div>
+     </div>
+   </div>
+ );
 }
+
+
+

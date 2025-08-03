@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Calendar as BigCalendar, momentLocalizer, View, Views } from 'react-big-calendar';
 import moment from 'moment';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -443,7 +444,12 @@ export default function Calendar({ onNavigateToPharmacy, onNavigateToAIMeeting }
       </div>
 
       {/* Upcoming Events Section */}
-      <div className="max-w-7xl mx-auto px-6 pb-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="max-w-7xl mx-auto px-6 pb-12"
+      >
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900">Upcoming Events</h3>
@@ -452,244 +458,295 @@ export default function Calendar({ onNavigateToPharmacy, onNavigateToAIMeeting }
             </span>
           </div>
           <div className="space-y-3">
-            {events
-              .filter(event => event.start >= new Date())
-              .sort((a, b) => a.start.getTime() - b.start.getTime())
-              .slice(0, 5)
-              .map(event => (
-                <div
-                  key={event.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200"
-                  onClick={() => handleSelectEvent(event)}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-3 h-3 rounded-sm ${event.type === 'appointment' ? 'bg-gray-600'
-                      : event.type === 'medication' ? 'bg-gray-500'
-                        : event.type === 'ai-checkin' ? 'bg-gray-400'
-                          : 'bg-gray-800'
-                      }`}></div>
-                    <div>
-                      <div className="font-medium text-gray-900">{event.title}</div>
-                      <div className="text-sm text-gray-600">
-                        {moment(event.start).format('MMM D, YYYY [at] h:mm A')}
+            <AnimatePresence>
+              {events
+                .filter(event => event.start >= new Date())
+                .sort((a, b) => a.start.getTime() - b.start.getTime())
+                .slice(0, 5)
+                .map((event, index) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200"
+                    onClick={() => handleSelectEvent(event)}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-3 h-3 rounded-sm ${event.type === 'appointment' ? 'bg-gray-600'
+                        : event.type === 'medication' ? 'bg-gray-500'
+                          : event.type === 'ai-checkin' ? 'bg-gray-400'
+                            : 'bg-gray-800'
+                        }`}></div>
+                      <div>
+                        <div className="font-medium text-gray-900">{event.title}</div>
+                        <div className="text-sm text-gray-600">
+                          {moment(event.start).format('MMM D, YYYY [at] h:mm A')}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    {event.location && (
-                      <span className="text-xs text-gray-500">{event.location}</span>
-                    )}
-                    {event.medicationDose && (
-                      <span className="text-xs text-gray-500">{event.medicationDose}</span>
-                    )}
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${event.type === 'appointment'
-                      ? 'bg-gray-100 text-gray-700'
-                      : event.type === 'medication'
+                    <div className="flex items-center space-x-3">
+                      {event.location && (
+                        <span className="text-xs text-gray-500">{event.location}</span>
+                      )}
+                      {event.medicationDose && (
+                        <span className="text-xs text-gray-500">{event.medicationDose}</span>
+                      )}
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${event.type === 'appointment'
                         ? 'bg-gray-100 text-gray-700'
-                        : event.type === 'ai-checkin'
+                        : event.type === 'medication'
                           ? 'bg-gray-100 text-gray-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                      {event.type === 'appointment' ? 'Appointment'
-                        : event.type === 'medication' ? 'Medication'
-                          : event.type === 'ai-checkin' ? 'AI Check-in'
-                            : 'Doctor Follow-up'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                          : event.type === 'ai-checkin'
+                            ? 'bg-gray-100 text-gray-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                        {event.type === 'appointment' ? 'Appointment'
+                          : event.type === 'medication' ? 'Medication'
+                            : event.type === 'ai-checkin' ? 'AI Check-in'
+                              : 'Doctor Follow-up'}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+            </AnimatePresence>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Event Detail Modal */}
-      {showEventModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={closeModal}>
-          <div className="bg-white rounded-lg border border-gray-200 w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">{selectedEvent.title}</h3>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="flex items-center">
-                <div className={`w-3 h-3 rounded-sm mr-3 ${selectedEvent.type === 'appointment' ? 'bg-gray-600'
-                  : selectedEvent.type === 'medication' ? 'bg-gray-500'
-                    : selectedEvent.type === 'ai-checkin' ? 'bg-gray-400'
-                      : 'bg-gray-800'
-                  }`}></div>
-                <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                  {selectedEvent.type === 'appointment' ? 'Appointment'
-                    : selectedEvent.type === 'medication' ? 'Medication'
-                      : selectedEvent.type === 'ai-checkin' ? 'AI Check-in'
-                        : 'Doctor Follow-up'}
-                </span>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Date & Time</p>
-                <p className="text-sm text-gray-600">
-                  {moment(selectedEvent.start).format('MMMM Do, YYYY [at] h:mm A')}
-                </p>
+      <AnimatePresence>
+        {showEventModal && selectedEvent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-lg border border-gray-200 w-full max-w-md shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">{selectedEvent.title}</h3>
+                  <button
+                    onClick={closeModal}
+                    className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              {selectedEvent.location && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Location</p>
-                  <p className="text-sm text-gray-600">{selectedEvent.location}</p>
+              <div className="p-6 space-y-4">
+                <div className="flex items-center">
+                  <div className={`w-3 h-3 rounded-sm mr-3 ${selectedEvent.type === 'appointment' ? 'bg-gray-600'
+                    : selectedEvent.type === 'medication' ? 'bg-gray-500'
+                      : selectedEvent.type === 'ai-checkin' ? 'bg-gray-400'
+                        : 'bg-gray-800'
+                    }`}></div>
+                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                    {selectedEvent.type === 'appointment' ? 'Appointment'
+                      : selectedEvent.type === 'medication' ? 'Medication'
+                        : selectedEvent.type === 'ai-checkin' ? 'AI Check-in'
+                          : 'Doctor Follow-up'}
+                  </span>
                 </div>
-              )}
 
-              {selectedEvent.medicationDose && (
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Dosage</p>
-                  <p className="text-sm text-gray-600">{selectedEvent.medicationDose}</p>
-                </div>
-              )}
-
-              {selectedEvent.instructions && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Instructions</p>
-                  <p className="text-sm text-gray-600">{selectedEvent.instructions}</p>
-                </div>
-              )}
-
-              {selectedEvent.description && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Description</p>
-                  <p className="text-sm text-gray-600">{selectedEvent.description}</p>
-                </div>
-              )}
-
-              {selectedEvent.expiryDate && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Expiry Date</p>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Date & Time</p>
                   <p className="text-sm text-gray-600">
-                    {moment(selectedEvent.expiryDate).format('MMMM Do, YYYY')}
+                    {moment(selectedEvent.start).format('MMMM Do, YYYY [at] h:mm A')}
                   </p>
                 </div>
-              )}
-            </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-400"
-              >
-                Close
-              </button>
-              {selectedEvent.canAdjustTime && (
-                <button
-                  onClick={openTimeAdjustModal}
+                {selectedEvent.location && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Location</p>
+                    <p className="text-sm text-gray-600">{selectedEvent.location}</p>
+                  </div>
+                )}
+
+                {selectedEvent.medicationDose && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Dosage</p>
+                    <p className="text-sm text-gray-600">{selectedEvent.medicationDose}</p>
+                  </div>
+                )}
+
+                {selectedEvent.instructions && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Instructions</p>
+                    <p className="text-sm text-gray-600">{selectedEvent.instructions}</p>
+                  </div>
+                )}
+
+                {selectedEvent.description && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Description</p>
+                    <p className="text-sm text-gray-600">{selectedEvent.description}</p>
+                  </div>
+                )}
+
+                {selectedEvent.expiryDate && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Expiry Date</p>
+                    <p className="text-sm text-gray-600">
+                      {moment(selectedEvent.expiryDate).format('MMMM Do, YYYY')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={closeModal}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 >
-                  Adjust Time
-                </button>
-              )}
-              {selectedEvent.type === 'ai-checkin' && (
-                <button
-                  onClick={handleJoinAIMeeting}
+                  Close
+                </motion.button>
+                {selectedEvent.canAdjustTime && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={openTimeAdjustModal}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  >
+                    Adjust Time
+                  </motion.button>
+                )}
+                {selectedEvent.type === 'ai-checkin' && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleJoinAIMeeting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  >
+                    Join Meeting
+                  </motion.button>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 >
-                  Join Meeting
-                </button>
-              )}
-              <button className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400">
-                Edit Event
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  Edit Event
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Time Adjustment Modal */}
-      {showTimeAdjustModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowTimeAdjustModal(false)}>
-          <div className="bg-white rounded-lg border border-gray-200 w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Adjust Check-in Times</h3>
-                <button
+      <AnimatePresence>
+        {showTimeAdjustModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowTimeAdjustModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-lg border border-gray-200 w-full max-w-md shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Adjust Check-in Times</h3>
+                  <button
+                    onClick={() => setShowTimeAdjustModal(false)}
+                    className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    AI Recovery Check-in Time
+                  </label>
+                  <input
+                    type="time"
+                    value={aiCheckinTime}
+                    onChange={(e) => setAiCheckinTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Daily AI-powered wellness check-ins</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Doctor Follow-up Time
+                  </label>
+                  <input
+                    type="time"
+                    value={doctorFollowupTime}
+                    onChange={(e) => setDoctorFollowupTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Doctor Visit Frequency
+                  </label>
+                  <select
+                    value={doctorFrequency}
+                    onChange={(e) => setDoctorFrequency(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  >
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Every 2 weeks</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Every 3 months</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">How often to schedule doctor consultations</p>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setShowTimeAdjustModal(false)}
-                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  AI Recovery Check-in Time
-                </label>
-                <input
-                  type="time"
-                  value={aiCheckinTime}
-                  onChange={(e) => setAiCheckinTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-                />
-                <p className="text-xs text-gray-500 mt-1">Daily AI-powered wellness check-ins</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Doctor Follow-up Time
-                </label>
-                <input
-                  type="time"
-                  value={doctorFollowupTime}
-                  onChange={(e) => setDoctorFollowupTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Doctor Visit Frequency
-                </label>
-                <select
-                  value={doctorFrequency}
-                  onChange={(e) => setDoctorFrequency(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowTimeAdjustModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 >
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Every 2 weeks</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Every 3 months</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">How often to schedule doctor consultations</p>
+                  Save Changes
+                </motion.button>
               </div>
-            </div>
-
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowTimeAdjustModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowTimeAdjustModal(false)}
-                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* User Details Popup */}
       <UserDetailsPopup

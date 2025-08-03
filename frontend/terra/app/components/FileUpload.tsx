@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -136,8 +137,9 @@ export default function FileUpload({
         {label}
       </label>
       
-      <div
-        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
@@ -148,14 +150,18 @@ export default function FileUpload({
           onChange={handleFileChange}
           className="hidden"
         />
-        
+
         <label
           htmlFor="file-upload"
           className="cursor-pointer"
         >
           <div className="space-y-2">
-            <div className="text-gray-400">
-              <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 20 }}
+            >
+              <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                 <path
                   d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
                   strokeWidth={2}
@@ -163,7 +169,7 @@ export default function FileUpload({
                   strokeLinejoin="round"
                 />
               </svg>
-            </div>
+            </motion.div>
             <div className="text-gray-600">
               <span className="font-medium text-blue-600 hover:text-blue-500">
                 Click to upload
@@ -175,81 +181,113 @@ export default function FileUpload({
             </p>
           </div>
         </label>
-      </div>
+      </motion.div>
 
-      {selectedFile && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-2">
-          <div className="flex items-center">
-            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">
-                File selected: {selectedFile.name}
-              </p>
-              <p className="text-sm text-green-700">
-                Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
-            </div>
-          </div>
-          <button
-            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleAnalyzeClick}
-            disabled={isUploading}
+      <AnimatePresence>
+        {selectedFile && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-green-50 border border-green-200 rounded-md p-3 mb-2"
           >
-            {isUploading ? 'Analyzing & Saving...' : 'Analyze Prescription'}
-          </button>
-        </div>
-      )}
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">
+                  File selected: {selectedFile.name}
+                </p>
+                <p className="text-sm text-green-700">
+                  Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleAnalyzeClick}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <div className="flex items-center">
+                  <motion.div
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                  Analyzing & Saving...
+                </div>
+              ) : 'Analyze Prescription'}
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {analysisResult && (
-        <div className="mt-4 p-4 bg-white border border-gray-200 rounded">
-          <h4 className="font-semibold mb-2">Prescription Summary</h4>
-          <div className="space-y-2 text-gray-800">
-            {analysisResult.patient_name && (
-              <div>
-                <span className="font-medium">Patient Name:</span> {analysisResult.patient_name}
-              </div>
-            )}
-            {analysisResult.medication && (
-              <div>
-                <span className="font-medium">Medication:</span> {analysisResult.medication}
-              </div>
-            )}
-            {analysisResult.instructions && (
-              <div>
-                <span className="font-medium">Instructions:</span> {analysisResult.instructions}
-              </div>
-            )}
-            {analysisResult.doctor && (
-              <div>
-                <span className="font-medium">Prescribed By:</span> {analysisResult.doctor}
-              </div>
-            )}
-            {analysisResult.expiry && (
-              <div>
-                <span className="font-medium">Expiry Date:</span> {analysisResult.expiry}
-              </div>
-            )}
-            {/* Optionally show full text for troubleshooting */}
-            {/* <details>
+      <AnimatePresence>
+        {analysisResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mt-4 p-4 bg-white border border-gray-200 rounded"
+          >
+            <h4 className="font-semibold mb-2">Prescription Summary</h4>
+            <div className="space-y-2 text-gray-800">
+              {analysisResult.patient_name && (
+                <div>
+                  <span className="font-medium">Patient Name:</span> {analysisResult.patient_name}
+                </div>
+              )}
+              {analysisResult.medication && (
+                <div>
+                  <span className="font-medium">Medication:</span> {analysisResult.medication}
+                </div>
+              )}
+              {analysisResult.instructions && (
+                <div>
+                  <span className="font-medium">Instructions:</span> {analysisResult.instructions}
+                </div>
+              )}
+              {analysisResult.doctor && (
+                <div>
+                  <span className="font-medium">Prescribed By:</span> {analysisResult.doctor}
+                </div>
+              )}
+              {analysisResult.expiry && (
+                <div>
+                  <span className="font-medium">Expiry Date:</span> {analysisResult.expiry}
+                </div>
+              )}
+              {/* Optionally show full text for troubleshooting */}
+              {/* <details>
               <summary className="text-sm text-gray-500 cursor-pointer">Show full prescription text</summary>
               <div className="text-xs text-gray-500 mt-2">{analysisResult.full_text}</div>
             </details> */}
-          </div>
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-          <div className="flex items-center">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <p className="ml-3 text-sm text-red-800">{error}</p>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-red-50 border border-red-200 rounded-md p-3"
+          >
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="ml-3 text-sm text-red-800">{error}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

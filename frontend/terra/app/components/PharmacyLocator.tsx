@@ -2,6 +2,7 @@
 
 
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import FileUpload from './FileUpload';
 
 
@@ -833,7 +834,12 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
   return (
     <div className="min-h-screen bg-white" style={{ backgroundColor: 'white' }}>
       <div className="max-w-6xl mx-auto p-6 space-y-6">
-        <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-6xl mx-auto p-6 space-y-6"
+        >
           {/* Header */}
           <div className="text-center">
             <div className="flex justify-between items-center mb-4">
@@ -843,19 +849,25 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
                 <p className="text-gray-600 text-2xl">Find pharmacies and medicines in the Greater Toronto Area</p>
               </div>
               <div className="flex space-x-3">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => window.location.href = '/calendar'}
                   className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
                   📅 Medical Calendar
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
 
-
           {/* Combined Search Form */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-lg shadow-md p-6"
+          >
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Search Pharmacies</h2>
             <form onSubmit={handleCombinedSearch}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -888,20 +900,27 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
               </div>
 
               <div className="text-center">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={loading}
                   className="px-8 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {loading ? 'Searching...' : '🔍 Search Pharmacies'}
-                </button>
+                </motion.button>
               </div>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* File Upload Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Prescription</h2>
           <FileUpload
             onFileSelect={handleFileUpload}
@@ -910,96 +929,88 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
             label="Upload your prescription or medical document"
           />
           {selectedFile && (
-            <p className="mt-2 text-sm text-gray-600">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-2 text-sm text-gray-600"
+            >
               ✅ Uploaded: {selectedFile.name} - Medicine will be auto-filled from prescription
-            </p>
+            </motion.p>
           )}
-        </div>
-
+        </motion.div>
 
         {/* Results Section */}
-        {pharmacies.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Map */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">
-                Map View
-                {medicine.trim() && (
-                  <span className="text-sm text-gray-600 block">
-                    🟢 Green = Has {medicine} • 🔴 Red = Stock unknown
-                  </span>
-                )}
-                {isHardcodedLocation(address) && (
-                  <span className="text-sm text-blue-600 block">
-                    🎯 Showing curated results for this location
-                  </span>
-                )}
-              </h2>
-              <div className="p-6">
-                <div ref={mapContainerRef} style={{ width: '100%', height: '400px' }} />
-              </div>
-            </div>
+        <AnimatePresence>
+          {pharmacies.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            >
+              {/* Map */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-white rounded-lg shadow-md overflow-hidden"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">
+                  Map View
+                  {medicine.trim() && (
+                    <span className="text-sm text-gray-600 block">
+                      🟢 Green = Has {medicine} • 🔴 Red = Stock unknown
+                    </span>
+                  )}
+                  {isHardcodedLocation(address) && (
+                    <span className="text-sm text-blue-600 block">
+                      🎯 Showing curated results for this location
+                    </span>
+                  )}
+                </h2>
+                <div className="p-6">
+                  <div ref={mapContainerRef} style={{ width: '100%', height: '400px' }} />
+                </div>
+              </motion.div>
 
-
-            {/* Pharmacy List */}
-            <div className="bg-white rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">
-                {address.trim() && medicine.trim()
-                  ? `Results for "${medicine}" near "${address}"`
-                  : medicine.trim()
-                    ? `Pharmacies with "${medicine}"`
-                    : `Pharmacies near "${address}"`
-                } ({pharmacies.length})
-                {isHardcodedLocation(address) && (
-                  <span className="text-sm text-blue-600 block">
-                    🎯 Curated results for this location
-                  </span>
-                )}
-              </h2>
-              <div className="p-6">
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {pharmacies.map((pharmacy) => (
-                    <div
-                      key={pharmacy.id}
-                      className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${selectedPharmacyId === pharmacy.id ? 'bg-blue-50 border-blue-400' : ''
-                        } ${pharmacy.hasRequestedMedicine ? 'border-l-4 border-l-green-500' : ''}`}
-                      onClick={() => {
-                        setSelectedPharmacyId(pharmacy.id);
-                        const marker = markerRefs.current[pharmacy.id];
-                        if (marker) {
-                          window.google.maps.event.trigger(marker, 'click');
-                        }
-                      }}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold">{pharmacy.name}</h3>
-                            {pharmacy.hasRequestedMedicine && medicine.trim() && (
-                              <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                ✅ Has {medicine}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-gray-600 mb-1">{pharmacy.address}</p>
-                          <div className="flex flex-wrap gap-3 text-sm">
-                            {pharmacy.distance !== undefined && (
-                              <span className="text-gray-500">📍 {pharmacy.distance.toFixed(2)} km away</span>
-                            )}
-                            {pharmacy.rating && (
-                              <span className="text-yellow-600">⭐ {pharmacy.rating}</span>
-                            )}
-                            {pharmacy.open_now !== undefined && (
-                              <span className={pharmacy.open_now ? 'text-green-600' : 'text-red-600'}>
-                                {pharmacy.open_now ? '🟢 Open Now' : '🔴 Closed'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
+              {/* Pharmacy List */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-white rounded-lg shadow-md"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">
+                  {address.trim() && medicine.trim()
+                    ? `Results for "${medicine}" near "${address}"`
+                    : medicine.trim()
+                      ? `Pharmacies with "${medicine}"`
+                      : `Pharmacies near "${address}"`
+                  } ({pharmacies.length})
+                  {isHardcodedLocation(address) && (
+                    <span className="text-sm text-blue-600 block">
+                      🎯 Curated results for this location
+                    </span>
+                  )}
+                </h2>
+                <div className="p-6">
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    <AnimatePresence>
+                      {pharmacies.map((pharmacy, index) => (
+                        <motion.div
+                          key={pharmacy.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          layout
+                          whileHover={{ scale: 1.02,
+                            boxShadow: "0px 10px 20px rgba(0,0,0,0.1)"
+                           }}
+                          className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${selectedPharmacyId === pharmacy.id ? 'bg-blue-50 border-blue-400' : ''
+                            } ${pharmacy.hasRequestedMedicine ? 'border-l-4 border-l-green-500' : ''}`}
+                          onClick={() => {
                             setSelectedPharmacyId(pharmacy.id);
                             const marker = markerRefs.current[pharmacy.id];
                             if (marker) {
@@ -1007,58 +1018,113 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
                             }
                           }}
                         >
-                          View Details
-                        </button>
-                      </div>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-lg font-bold">{pharmacy.name}</h3>
+                                {pharmacy.hasRequestedMedicine && medicine.trim() && (
+                                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                    ✅ Has {medicine}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-gray-600 mb-1">{pharmacy.address}</p>
+                              <div className="flex flex-wrap gap-3 text-sm">
+                                {pharmacy.distance !== undefined && (
+                                  <span className="text-gray-500">📍 {pharmacy.distance.toFixed(2)} km away</span>
+                                )}
+                                {pharmacy.rating && (
+                                  <span className="text-yellow-600">⭐ {pharmacy.rating}</span>
+                                )}
+                                {pharmacy.open_now !== undefined && (
+                                  <span className={pharmacy.open_now ? 'text-green-600' : 'text-red-600'}>
+                                    {pharmacy.open_now ? '🟢 Open Now' : '🔴 Closed'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPharmacyId(pharmacy.id);
+                                const marker = markerRefs.current[pharmacy.id];
+                                if (marker) {
+                                  window.google.maps.event.trigger(marker, 'click');
+                                }
+                              }}
+                            >
+                              View Details
+                            </motion.button>
+                          </div>
 
-                      {/* Expanded details if selected */}
-                      {selectedPharmacyId === pharmacy.id && (
-                        <div className="mt-4 p-4 bg-gray-50 border-t border-gray-200 rounded">
-                          <h4 className="font-semibold mb-2">Hours of Operation</h4>
-                          <ul className="text-sm text-gray-700 mb-3">
-                            <li>Mon-Fri: 9am - 9pm</li>
-                            <li>Sat: 10am - 6pm</li>
-                            <li>Sun: 11am - 5pm</li>
-                          </ul>
-                          <h4 className="font-semibold mb-2">Stock Status</h4>
-                          <ul className="text-sm text-gray-700">
-                            {pharmacy.hasRequestedMedicine && medicine.trim() && (
-                              <li className="text-green-600">✅ {medicine} - Available</li>
+                          {/* Expanded details if selected */}
+                          <AnimatePresence>
+                            {selectedPharmacyId === pharmacy.id && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="mt-4 p-4 bg-gray-50 border-t border-gray-200 rounded"
+                              >
+                                <h4 className="font-semibold mb-2">Hours of Operation</h4>
+                                <ul className="text-sm text-gray-700 mb-3">
+                                  <li>Mon-Fri: 9am - 9pm</li>
+                                  <li>Sat: 10am - 6pm</li>
+                                  <li>Sun: 11am - 5pm</li>
+                                </ul>
+                                <h4 className="font-semibold mb-2">Stock Status</h4>
+                                <ul className="text-sm text-gray-700">
+                                  {pharmacy.hasRequestedMedicine && medicine.trim() && (
+                                    <li className="text-green-600">✅ {medicine} - Available</li>
+                                  )}
+                                  <li>✅ Acetaminophen</li>
+                                  <li>✅ Ibuprofen</li>
+                                  <li>✅ Antibiotics</li>
+                                  <li>❌ Prescription XYZ</li>
+                                </ul>
+                              </motion.div>
                             )}
-                            <li>✅ Acetaminophen</li>
-                            <li>✅ Ibuprofen</li>
-                            <li>✅ Antibiotics</li>
-                            <li>❌ Prescription XYZ</li>
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          </AnimatePresence>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* No Results Message */}
-        {!loading && pharmacies.length === 0 && (address.trim() || medicine.trim()) && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-medium text-yellow-800 mb-2">No Results Found</h3>
-            <p className="text-yellow-700">
-              {address.trim() && medicine.trim()
-                ? `No pharmacies found near "${address}" with "${medicine}" in stock.`
-                : medicine.trim()
-                  ? `No pharmacies found with "${medicine}" in stock.`
-                  : `No pharmacies found near "${address}".`
-              }
-            </p>
-            <p className="text-sm text-yellow-600 mt-2">
-              Try searching with a different address or medicine name.
-            </p>
-          </div>
-        )}
+        <AnimatePresence>
+          {!loading && pharmacies.length === 0 && (address.trim() || medicine.trim()) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center"
+            >
+              <h3 className="text-lg font-medium text-yellow-800 mb-2">No Results Found</h3>
+              <p className="text-yellow-700">
+                {address.trim() && medicine.trim()
+                  ? `No pharmacies found near "${address}" with "${medicine}" in stock.`
+                  : medicine.trim()
+                    ? `No pharmacies found with "${medicine}" in stock.`
+                    : `No pharmacies found near "${address}".`
+                }
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                Try searching with a different address or medicine name.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
     </div>
   );
 }

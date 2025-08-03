@@ -312,17 +312,17 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="text-center">
-        <div className="flex justify-between items-center mb-4">
+      <div className="text-center mb-12">
+        <div className="flex justify-between items-start">
           <div></div> {/* Left spacer */}
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">CareBridge Pharmacy Locator</h1>
-            <p className="text-gray-600">Find pharmacies near you in the Greater Toronto Area</p>
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">CareBridge Pharmacy Locator</h1>
+            <p className="mt-4 text-lg text-gray-600">Find pharmacies near you in the Greater Toronto Area</p>
           </div>
           <div className="flex space-x-3">
             <button
               onClick={() => window.location.href = '/calendar'}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               📅 Medical Calendar
             </button>
@@ -331,10 +331,10 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
       </div>
 
       {/* Address Input Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <form onSubmit={handleSubmit} className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-200/80">
+        <div className="flex flex-col sm:flex-row items-end gap-4">
           <div className="flex-1">
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="address" className="block text-sm font-medium text-gray-800 mb-2">
               Enter your address
             </label>
             <input
@@ -343,14 +343,14 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="e.g., 123 Queen Street, Toronto, ON"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
               required
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-transform transform hover:scale-105 shadow-md"
           >
             {loading ? 'Searching...' : 'Find Pharmacies'}
           </button>
@@ -358,8 +358,8 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
       </form>
 
       {/* File Upload Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Prescription</h2>
+      <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-200/80">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Upload Prescription</h2>
         <FileUpload
           onFileSelect={handleFileUpload}
           accept=".png,.jpg,.jpeg,.pdf"
@@ -370,26 +370,26 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
 
       {/* Results Section */}
       {pharmacies.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Map */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">Map View</h2>
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-gray-200/80">
+            <h2 className="text-2xl font-semibold text-gray-900 p-6">Map View</h2>
             <div className="p-6">
-              <div ref={mapContainerRef} style={{ width: '100%', height: '400px' }} />
+              <div ref={mapContainerRef} style={{ width: '100%', height: '450px', borderRadius: '12px' }} />
             </div>
           </div>
 
           {/* Pharmacy List */}
-          <div className="bg-white rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 p-6 pb-0">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/80">
+            <h2 className="text-2xl font-semibold text-gray-900 p-6">
               Nearby Pharmacies ({pharmacies.length})
             </h2>
-            <div className="p-6">
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="px-6 pb-6">
+              <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2">
                 {pharmacies.map((pharmacy) => (
                   <div
                     key={pharmacy.id}
-                    className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ${selectedPharmacyId === pharmacy.id ? 'bg-blue-50 border-blue-400' : ''}`}
+                    className={`border border-gray-200/80 rounded-lg p-4 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 ${selectedPharmacyId === pharmacy.id ? 'bg-blue-50/80 border-blue-400 shadow-lg' : 'bg-white/80'}`}
                     onClick={() => {
                       setSelectedPharmacyId(pharmacy.id);
                       const marker = markerRefs.current[pharmacy.id];
@@ -399,26 +399,28 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
                     }}
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-lg font-bold">{pharmacy.name}</h3>
-                        <p className="text-gray-600">{pharmacy.address}</p>
-                        {pharmacy.distance !== undefined && (
-                          <p className="text-sm text-gray-500">
-                            {pharmacy.distance.toFixed(2)} km away
-                          </p>
-                        )}
-                        {pharmacy.rating && (
-                          <p className="text-sm text-yellow-600">Rating: {pharmacy.rating}</p>
-                        )}
-                        {pharmacy.open_now !== undefined && (
-                          <p className={`text-sm ${pharmacy.open_now ? 'text-green-600' : 'text-red-600'}`}>
-                            {pharmacy.open_now ? 'Open Now' : 'Closed'}
-                          </p>
-                        )}
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900">{pharmacy.name}</h3>
+                        <p className="text-gray-700 mt-1">{pharmacy.address}</p>
+                        <div className="flex items-center space-x-4 mt-2 text-sm">
+                          {pharmacy.distance !== undefined && (
+                            <p className="text-gray-600">
+                              {pharmacy.distance.toFixed(2)} km away
+                            </p>
+                          )}
+                          {pharmacy.rating && (
+                            <p className="text-yellow-600 font-semibold">★ {pharmacy.rating}</p>
+                          )}
+                          {pharmacy.open_now !== undefined && (
+                            <p className={`font-semibold ${pharmacy.open_now ? 'text-green-600' : 'text-red-600'}`}>
+                              {pharmacy.open_now ? 'Open Now' : 'Closed'}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent parent onClick
                           setSelectedPharmacyId(pharmacy.id);
@@ -428,24 +430,24 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
                           }
                         }}
                       >
-                        View Details
+                        Details
                       </button>
                     </div>
                     {/* Expanded details if selected */}
                     {selectedPharmacyId === pharmacy.id && (
-                      <div className="mt-4 p-4 bg-white border-t border-gray-200">
-                        <h4 className="font-semibold mb-2">Hours of Operation</h4>
-                        <ul className="text-sm text-gray-700 mb-2">
+                      <div className="mt-4 pt-4 border-t border-gray-200/80">
+                        <h4 className="font-semibold mb-2 text-gray-800">Hours of Operation</h4>
+                        <ul className="text-sm text-gray-700 mb-4 grid grid-cols-2 gap-x-4">
                           <li>Mon-Fri: 9am - 9pm</li>
                           <li>Sat: 10am - 6pm</li>
                           <li>Sun: 11am - 5pm</li>
                         </ul>
-                        <h4 className="font-semibold mb-2">Stock Template</h4>
-                        <ul className="text-sm text-gray-700">
+                        <h4 className="font-semibold mb-2 text-gray-800">Stock Template</h4>
+                        <ul className="text-sm text-gray-700 grid grid-cols-2 gap-x-4">
                           <li>✔️ Acetaminophen</li>
                           <li>✔️ Ibuprofen</li>
                           <li>✔️ Antibiotics</li>
-                          <li>❌ Prescription XYZ</li>
+                          <li className="text-red-500">❌ Prescription XYZ</li>
                         </ul>
                       </div>
                     )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface UserData {
   patient_name: string;
@@ -70,7 +71,12 @@ export default function MeetingWithAIPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">AI Check-in</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-4xl font-bold text-gray-800">AI Check-in</h1>
+          <Link href="/summaries" className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200">
+            View Past Summaries
+          </Link>
+        </div>
         <p className="text-gray-600 mb-8">
           Have a conversation with your AI assistant about your recovery progress.
         </p>

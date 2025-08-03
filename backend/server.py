@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
 import json
+from datetime import datetime
 
 from app import SimpleTextExtractor  # Import your class
 
@@ -88,7 +89,7 @@ def save_summary():
     summary_data = {
         'eventId': event_id,
         'summary': summary_content,
-        'timestamp': request.date
+        'timestamp': datetime.now().isoformat()
     }
 
     try:
@@ -97,6 +98,25 @@ def save_summary():
         return jsonify({'message': f'Summary for event {event_id} saved successfully'}), 200
     except Exception as e:
         return jsonify({'error': f'Failed to save summary: {str(e)}'}), 500
+
+@app.route('/api/summaries', methods=['GET'])
+def get_summaries():
+    summaries_dir = app.config['SUMMARIES_FOLDER']
+    summaries = []
+    if not os.path.isdir(summaries_dir):
+        return jsonify(summaries)
+
+    for filename in os.listdir(summaries_dir):
+        if filename.endswith('.json'):
+            filepath = os.path.join(summaries_dir, filename)
+            try:
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    summaries.append(data)
+            except Exception as e:
+                app.logger.error(f"Error loading summary from {filepath}: {e}")
+                continue
+    return jsonify(summaries)
 
 if __name__ == "__main__":
     app.run(debug=True)

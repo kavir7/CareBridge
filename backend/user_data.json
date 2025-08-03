@@ -13,5 +13,15 @@
     "patient_name": "The provided text does not contain the patient's name.",
     "medication": "ciprofloxacin 500 mg",
     "doctor": "Lawrence Merry, M.D."
+  },
+  "session-1754179646631-okqkkvo": {
+    "patient_name": "Patel, Vivaan",
+    "medication": "Eucerin Cream 5% With Elocom 0.1% Cream",
+    "doctor": "Dr Thiryayi, Wasiq Ahmad"
+  },
+  "session_1754179648629_7v98vuuca": {
+    "patient_name": "Patel, Vivaan",
+    "medication": "Eucerin Cream 5% and Elocom Cream 0.1%",
+    "doctor": "Dr. Thiryayi, Wasiq Ahmad"
   }
 }

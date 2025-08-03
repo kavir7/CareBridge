@@ -3,6 +3,12 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
 import json
+from datetime import datetime
+from dotenv import load_dotenv
+from google.cloud import speech
+import google.generativeai as genai
+
+load_dotenv()
 
 from app import SimpleTextExtractor  # Import your class
 
@@ -13,7 +19,8 @@ app.config['SUMMARIES_FOLDER'] = 'summaries'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['SUMMARIES_FOLDER'], exist_ok=True)
 
-API_KEY = "AIzaSyCdopVKYikqDhRq-21uSeR-hDYHdLgs7uM"  # Replace with your actual key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GOOGLE_SPEECH_TO_TEXT_API_KEY = os.getenv("GOOGLE_SPEECH_TO_TEXT_API_KEY")
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -31,7 +38,7 @@ def upload_file():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
 
-    extractor = SimpleTextExtractor(API_KEY)
+    extractor = SimpleTextExtractor(GEMINI_API_KEY)
     all_text = extractor.extract_all_text(filepath)  # <-- uses uploaded file path
     patient_name = extractor.find_specific_info(all_text, "patient name")
     medication = extractor.find_specific_info(all_text, "medication name and strength")
@@ -88,7 +95,7 @@ def save_summary():
     summary_data = {
         'eventId': event_id,
         'summary': summary_content,
-        'timestamp': request.date
+        'timestamp': datetime.now().isoformat()
     }
 
     try:
@@ -97,6 +104,74 @@ def save_summary():
         return jsonify({'message': f'Summary for event {event_id} saved successfully'}), 200
     except Exception as e:
         return jsonify({'error': f'Failed to save summary: {str(e)}'}), 500
+
+@app.route('/api/summaries', methods=['GET'])
+def get_summaries():
+    summaries_dir = app.config['SUMMARIES_FOLDER']
+    summaries = []
+    if not os.path.isdir(summaries_dir):
+        return jsonify(summaries)
+
+    for filename in os.listdir(summaries_dir):
+        if filename.endswith('.json'):
+            filepath = os.path.join(summaries_dir, filename)
+            try:
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    summaries.append(data)
+            except Exception as e:
+                app.logger.error(f"Error loading summary from {filepath}: {e}")
+                continue
+    return jsonify(summaries)
+
+@app.route('/api/transcribe', methods=['POST'])
+def transcribe_audio():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    client = speech.SpeechClient()
+
+    audio = speech.RecognitionAudio(content=file.read())
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+        sample_rate_hertz=48000,
+        language_code='en-US'
+    )
+
+    try:
+        response = client.recognize(config=config, audio=audio)
+        if response.results:
+            transcription = response.results[0].alternatives[0].transcript
+            return jsonify({'transcription': transcription})
+        else:
+            return jsonify({'transcription': ''})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/summarize', methods=['POST'])
+def summarize_text():
+    data = request.get_json()
+    if not data or 'text' not in data:
+        return jsonify({'error': 'Missing text'}), 400
+
+    text = data['text']
+    if not text.strip():
+        return jsonify({'summary': ''})
+
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+
+        prompt = f"Summarize the following conversation in a few sentences:\n\n---\n\n{text}"
+
+        response = model.generate_content(prompt)
+
+        return jsonify({'summary': response.text.strip()})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

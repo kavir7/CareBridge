@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface UserData {
   patient_name: string;
@@ -12,6 +13,9 @@ interface UserData {
 export default function MeetingWithAIPage() {
   const [summary, setSummary] = useState('');
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const searchParams = useSearchParams();
   const eventId = searchParams.get('eventId');
 
@@ -67,10 +71,91 @@ export default function MeetingWithAIPage() {
     }
   };
 
+  const startRecording = async () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
+        setMediaRecorder(recorder);
+
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = (e) => {
+          chunks.push(e.data);
+        };
+
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
+          setAudioBlob(blob);
+        };
+
+        recorder.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error('Error getting user media', err);
+        alert("Could not start recording. Please ensure you have given microphone permissions.");
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const generateSummary = async () => {
+    if (!audioBlob) return;
+
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'recording.webm');
+
+    try {
+      const transcribeResponse = await fetch('http://localhost:5000/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (transcribeResponse.ok) {
+        const { transcription } = await transcribeResponse.json();
+
+        if (!transcription) {
+          alert("Could not transcribe audio. The recording might be silent.");
+          return;
+        }
+
+        const summarizeResponse = await fetch('http://localhost:5000/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: transcription }),
+        });
+
+        if (summarizeResponse.ok) {
+          const { summary } = await summarizeResponse.json();
+          setSummary(summary);
+        } else {
+          alert('Failed to generate summary.');
+          console.error('Failed to generate summary');
+        }
+      } else {
+        alert('Failed to transcribe audio.');
+        console.error('Failed to transcribe audio');
+      }
+    } catch (error) {
+      alert('An error occurred while generating the summary.');
+      console.error('Error generating summary:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">AI Check-in</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-4xl font-bold text-gray-800">AI Check-in</h1>
+          <Link href="/summaries" className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200">
+            View Past Summaries
+          </Link>
+        </div>
         <p className="text-gray-600 mb-8">
           Have a conversation with your AI assistant about your recovery progress.
         </p>
@@ -84,6 +169,34 @@ export default function MeetingWithAIPage() {
             >
             </elevenlabs-convai>
             <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Record Conversation</h2>
+          <div className="flex items-center space-x-4">
+            {!isRecording ? (
+              <button
+                onClick={startRecording}
+                className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
+              >
+                Start Recording
+              </button>
+            ) : (
+              <button
+                onClick={stopRecording}
+                className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
+              >
+                Stop Recording
+              </button>
+            )}
+            <button
+              onClick={generateSummary}
+              disabled={!audioBlob}
+              className="px-6 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Generate Summary
+            </button>
           </div>
         </div>
 

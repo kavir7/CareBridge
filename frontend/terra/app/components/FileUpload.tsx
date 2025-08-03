@@ -20,6 +20,8 @@ export default function FileUpload({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [mongoSaveResult, setMongoSaveResult] = useState<any>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,22 +76,57 @@ export default function FileUpload({
   };
 
   const handleFileUpload = async (file: File) => {
-    setSelectedFile(file);
+    setIsUploading(true);
+    setError('');
+    setMongoSaveResult(null);
+    
     const formData = new FormData();
     formData.append('file', file);
     // Generate a unique session ID for this upload
-    formData.append('sessionId', `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    formData.append('sessionId', sessionId);
 
     try {
+      // Step 1: Upload and analyze the prescription with Flask backend
       const response = await fetch('http://localhost:5000/upload', {
         method: 'POST',
         body: formData,
       });
       const data = await response.json();
-      setAnalysisResult(data); // Save result to state
+      setAnalysisResult(data);
       console.log('Prescription data:', data);
+
+      // Step 2: Save the analyzed data to MongoDB
+      if (data && !data.error) {
+        const mongoResponse = await fetch('/api/prescriptions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            patient_name: data.patient_name,
+            doctor: data.doctor,
+            medication: data.medication,
+            instructions: data.instructions,
+            full_text: data.full_text,
+            sessionId: sessionId
+          }),
+        });
+
+        const mongoResult = await mongoResponse.json();
+        setMongoSaveResult(mongoResult);
+        
+        if (mongoResult.isDuplicate) {
+          console.log('Duplicate prescription detected:', mongoResult.message);
+        } else if (mongoResult.success) {
+          console.log('Prescription saved to MongoDB:', mongoResult.message);
+        }
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
+      setError('Failed to upload and analyze prescription');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -156,10 +193,11 @@ export default function FileUpload({
             </div>
           </div>
           <button
-            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleAnalyzeClick}
+            disabled={isUploading}
           >
-            Analyze Prescription
+            {isUploading ? 'Analyzing & Saving...' : 'Analyze Prescription'}
           </button>
         </div>
       )}

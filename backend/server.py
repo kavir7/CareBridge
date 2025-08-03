@@ -173,18 +173,30 @@ def summarize_text():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
+
 
 @app.route('/api/user_data', methods=['GET'])
 def get_user_data():
     session_id = request.args.get('sessionId')
     print("Requested session_id:", repr(session_id))  # Debug print
     user_data_path = 'user_data.json'
-    with open(user_data_path, 'r') as f:
-        user_data = json.load(f)
-    print("Available keys:", list(user_data.keys()))  # Debug print
-    data = user_data.get(session_id)
-    if not data:
-        return jsonify({'error': 'No data found for this session'}), 404
-    return jsonify(data)
+    if not os.path.exists(user_data_path):
+        return jsonify({'error': 'No user data found'}), 404
+
+    try:
+        with open(user_data_path, 'r') as f:
+            user_data = json.load(f)
+
+        data = user_data.get(session_id)
+        if not data:
+            return jsonify({'error': 'No data found for this session'}), 404
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to retrieve user data: {str(e)}'}), 500
+    
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

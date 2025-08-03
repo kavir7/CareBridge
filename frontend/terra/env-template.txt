@@ -2,3 +2,6 @@
 
 MONGODB_URI=mongodb+srv://kerelosgayed:<YOUR_DB_PASSWORD>@terracluster.ixq05qv.mongodb.net/
 MONGODB_DB=terrahacksDatabase
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_publishable_key
+CLERK_SECRET_KEY=your_secret_key

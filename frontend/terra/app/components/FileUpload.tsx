@@ -11,6 +11,21 @@ interface FileUploadProps {
   className?: string;
 }
 
+
+function xorEncrypt(text: string, key: string): string {
+  return btoa([...text].map((c, i) => 
+    String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+  ).join(''));
+}
+
+function xorDecrypt(encoded: string, key: string): string {
+  const decoded = atob(encoded);
+  return [...decoded].map((c, i) => 
+    String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+  ).join('');
+}
+
+
 export default function FileUpload({
   onFileSelect,
   accept = '.png,.jpg,.jpeg,.pdf',
@@ -123,10 +138,7 @@ export default function FileUpload({
           console.log('Prescription saved to MongoDB:', mongoResult.message);
         }
       }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      setError('Failed to upload and analyze prescription');
-    } finally {
+    }finally {
       setIsUploading(false);
     }
   };

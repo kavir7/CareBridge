@@ -14,7 +14,7 @@ export default function MeetingWithAIPage() {
   const [showAllSummaries, setShowAllSummaries] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  const contextText = "Kavir told our AI agent he began feeling dizzy two days after donating a kidney, with symptoms worsening when standing. He also mentioned some nausea. Our agent explained it could be orthostatic hypotension, likely from low blood pressure or mild dehydration. Kavir doesn't have a blood pressure monitor and was advised to visit urgent care if the dizziness worsens or he feels faint. He confirmed no chest pain and normal urination.";
+const contextText = "Vivaan told our AI agent he sustained a chemical burn on his forearm after a sulfuric acid spill during a lab session. He rinsed the area immediately with water and reported ongoing redness, swelling, and stinging pain, but no blistering or numbness. Our agent assessed the injury as a likely superficial partial-thickness burn and confirmed that Vivaan is only using Eucerin Cream with gauze. He was advised to monitor for signs of infection or delayed tissue damage and to seek medical attention if symptoms worsen.";
 
 
  const previousSummaries = [
@@ -177,5 +177,5 @@ export default function MeetingWithAIPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

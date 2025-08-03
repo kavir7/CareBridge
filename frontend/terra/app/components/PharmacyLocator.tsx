@@ -310,154 +310,189 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
   }, [pharmacies, userLocation]);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <div className="flex justify-between items-start">
-          <div></div> {/* Left spacer */}
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">CareBridge Pharmacy Locator</h1>
-            <p className="mt-4 text-lg text-gray-600">Find pharmacies near you in the Greater Toronto Area</p>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => window.location.href = '/calendar'}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              📅 Medical Calendar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Address Input Form */}
-      <form onSubmit={handleSubmit} className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-200/80">
-        <div className="flex flex-col sm:flex-row items-end gap-4">
-          <div className="flex-1">
-            <label htmlFor="address" className="block text-sm font-medium text-gray-800 mb-2">
-              Enter your address
-            </label>
-            <input
-              type="text"
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="e.g., 123 Queen Street, Toronto, ON"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-transform transform hover:scale-105 shadow-md"
-          >
-            {loading ? 'Searching...' : 'Find Pharmacies'}
-          </button>
-        </div>
-      </form>
-
-      {/* File Upload Section */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-200/80">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Upload Prescription</h2>
-        <FileUpload
-          onFileSelect={handleFileUpload}
-          accept=".png,.jpg,.jpeg,.pdf"
-          maxSize={10}
-          label="Upload your prescription or medical document"
-        />
-      </div>
-
-      {/* Results Section */}
-      {pharmacies.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Map */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-gray-200/80">
-            <h2 className="text-2xl font-semibold text-gray-900 p-6">Map View</h2>
-            <div className="p-6">
-              <div ref={mapContainerRef} style={{ width: '100%', height: '450px', borderRadius: '12px' }} />
+    <div className="min-h-screen bg-stone-50">
+      <div className="max-w-6xl mx-auto px-6 py-12 space-y-12">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="flex justify-between items-start">
+            <div></div> {/* Left spacer */}
+            <div className="flex-1 space-y-6">
+              <h1 className="text-5xl font-medium tracking-tight text-gray-900 sm:text-6xl">
+                CareBridge
+                <span className="block text-4xl sm:text-5xl font-normal text-gray-700 mt-2">
+                  Pharmacy Locator
+                </span>
+              </h1>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Discover pharmacies near you in the Greater Toronto Area with ease and confidence
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => window.location.href = '/calendar'}
+                className="inline-flex items-center px-6 py-3 border border-gray-900 rounded-lg text-sm font-medium text-gray-900 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition-colors"
+              >
+                📅 Medical Calendar
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Pharmacy List */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/80">
-            <h2 className="text-2xl font-semibold text-gray-900 p-6">
-              Nearby Pharmacies ({pharmacies.length})
-            </h2>
-            <div className="px-6 pb-6">
-              <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2">
-                {pharmacies.map((pharmacy) => (
-                  <div
-                    key={pharmacy.id}
-                    className={`border border-gray-200/80 rounded-lg p-4 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 ${selectedPharmacyId === pharmacy.id ? 'bg-blue-50/80 border-blue-400 shadow-lg' : 'bg-white/80'}`}
-                    onClick={() => {
-                      setSelectedPharmacyId(pharmacy.id);
-                      const marker = markerRefs.current[pharmacy.id];
-                      if (marker) {
-                        window.google.maps.event.trigger(marker, 'click');
-                      }
-                    }}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900">{pharmacy.name}</h3>
-                        <p className="text-gray-700 mt-1">{pharmacy.address}</p>
-                        <div className="flex items-center space-x-4 mt-2 text-sm">
-                          {pharmacy.distance !== undefined && (
-                            <p className="text-gray-600">
-                              {pharmacy.distance.toFixed(2)} km away
-                            </p>
-                          )}
-                          {pharmacy.rating && (
-                            <p className="text-yellow-600 font-semibold">★ {pharmacy.rating}</p>
-                          )}
-                          {pharmacy.open_now !== undefined && (
-                            <p className={`font-semibold ${pharmacy.open_now ? 'text-green-600' : 'text-red-600'}`}>
-                              {pharmacy.open_now ? 'Open Now' : 'Closed'}
-                            </p>
-                          )}
+        {/* Address Input Form */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col sm:flex-row items-end gap-4">
+              <div className="flex-1">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-900 mb-2">
+                  Enter your address
+                </label>
+                <input
+                  type="text"
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g., 123 Queen Street, Toronto, ON"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors bg-white text-gray-900 placeholder-gray-500"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto px-8 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Searching...' : 'Find Pharmacies'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* File Upload Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <h2 className="text-2xl font-medium text-gray-900 mb-4">Upload Prescription</h2>
+          <FileUpload
+            onFileSelect={handleFileUpload}
+            accept=".png,.jpg,.jpeg,.pdf"
+            maxSize={10}
+            label="Upload your prescription or medical document"
+          />
+        </div>
+
+        {/* Results Section */}
+        {pharmacies.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Map */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6">
+                <h2 className="text-2xl font-medium text-gray-900">Map View</h2>
+              </div>
+              <div className="px-6 pb-6">
+                <div 
+                  ref={mapContainerRef} 
+                  className="w-full h-96 rounded-lg border border-gray-200" 
+                />
+              </div>
+            </div>
+
+            {/* Pharmacy List */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6">
+                <h2 className="text-2xl font-medium text-gray-900">
+                  Nearby Pharmacies 
+                  <span className="text-lg font-normal text-gray-600 ml-2">({pharmacies.length})</span>
+                </h2>
+              </div>
+              <div className="px-6 pb-6">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {pharmacies.map((pharmacy) => (
+                    <div
+                      key={pharmacy.id}
+                      className={`border rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer ${
+                        selectedPharmacyId === pharmacy.id 
+                          ? 'bg-gray-50 border-gray-900 shadow-sm' 
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => {
+                        setSelectedPharmacyId(pharmacy.id);
+                        const marker = markerRefs.current[pharmacy.id];
+                        if (marker) {
+                          window.google.maps.event.trigger(marker, 'click');
+                        }
+                      }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-medium text-gray-900">{pharmacy.name}</h3>
+                          <p className="text-gray-600 mt-1">{pharmacy.address}</p>
+                          <div className="flex items-center space-x-4 mt-2 text-sm">
+                            {pharmacy.distance !== undefined && (
+                              <p className="text-gray-500">
+                                {pharmacy.distance.toFixed(2)} km away
+                              </p>
+                            )}
+                            {pharmacy.rating && (
+                              <p className="text-yellow-600 font-medium">★ {pharmacy.rating}</p>
+                            )}
+                            {pharmacy.open_now !== undefined && (
+                              <p className={`font-medium ${pharmacy.open_now ? 'text-green-600' : 'text-red-600'}`}>
+                                {pharmacy.open_now ? 'Open Now' : 'Closed'}
+                              </p>
+                            )}
+                          </div>
                         </div>
+                        <button
+                          className="ml-4 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPharmacyId(pharmacy.id);
+                            const marker = markerRefs.current[pharmacy.id];
+                            if (marker) {
+                              window.google.maps.event.trigger(marker, 'click');
+                            }
+                          }}
+                        >
+                          Details
+                        </button>
                       </div>
-                      <button
-                        className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent parent onClick
-                          setSelectedPharmacyId(pharmacy.id);
-                          const marker = markerRefs.current[pharmacy.id];
-                          if (marker) {
-                            window.google.maps.event.trigger(marker, 'click');
-                          }
-                        }}
-                      >
-                        Details
-                      </button>
+                      
+                      {/* Expanded details if selected */}
+                      {selectedPharmacyId === pharmacy.id && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="mb-4">
+                            <h4 className="font-medium mb-2 text-gray-900">Hours of Operation</h4>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div>Mon-Fri: 9am - 9pm</div>
+                              <div>Sat: 10am - 6pm</div>
+                              <div>Sun: 11am - 5pm</div>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-medium mb-2 text-gray-900">Stock Template</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className="flex items-center text-green-600">
+                                <span className="mr-2">✔️</span>Acetaminophen
+                              </div>
+                              <div className="flex items-center text-green-600">
+                                <span className="mr-2">✔️</span>Ibuprofen
+                              </div>
+                              <div className="flex items-center text-green-600">
+                                <span className="mr-2">✔️</span>Antibiotics
+                              </div>
+                              <div className="flex items-center text-red-500">
+                                <span className="mr-2">❌</span>Prescription XYZ
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {/* Expanded details if selected */}
-                    {selectedPharmacyId === pharmacy.id && (
-                      <div className="mt-4 pt-4 border-t border-gray-200/80">
-                        <h4 className="font-semibold mb-2 text-gray-800">Hours of Operation</h4>
-                        <ul className="text-sm text-gray-700 mb-4 grid grid-cols-2 gap-x-4">
-                          <li>Mon-Fri: 9am - 9pm</li>
-                          <li>Sat: 10am - 6pm</li>
-                          <li>Sun: 11am - 5pm</li>
-                        </ul>
-                        <h4 className="font-semibold mb-2 text-gray-800">Stock Template</h4>
-                        <ul className="text-sm text-gray-700 grid grid-cols-2 gap-x-4">
-                          <li>✔️ Acetaminophen</li>
-                          <li>✔️ Ibuprofen</li>
-                          <li>✔️ Antibiotics</li>
-                          <li className="text-red-500">❌ Prescription XYZ</li>
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -832,7 +832,7 @@ export default function PharmacyLocator({ apiKey }: PharmacyLocatorProps) {
 
 
   return (
-    <div className="min-h-screen bg-white" style={{ backgroundColor: 'white' }}>
+    <div className="min-h-screen">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}

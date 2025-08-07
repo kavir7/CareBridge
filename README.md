@@ -11,7 +11,7 @@ CareBridge is an AI-powered post-operative recovery assistant designed to help p
 - **Detailed Information**: Pharmacy ratings, opening hours, and distances
 - **File Upload**: Upload prescription documents (PNG, JPG, PDF)
 
-### 🤖 AI Check-in System (Coming Soon)
+### 🤖 AI Check-in System 
 - Daily AI-powered check-ins powered by Gemini
 - Medication tracking and reminders
 - Symptom monitoring and red flag detection
